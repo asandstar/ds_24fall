@@ -2,39 +2,117 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define MAX_LENGTH 10
+#define MAX_LOGS 100
+#define MAX_FUNC 50
+#define MAX_NAME_LEN 51
+
+typedef struct
+{
+    char funcName[MAX_NAME_LEN];
+    int startTime;
+    int totalTime;
+} FuncLog;
+
+typedef struct
+{
+    char funcName[MAX_NAME_LEN];
+    int totalTime;
+} FuncTime;
+
+FuncLog stack[MAX_LOGS];      // Stack to keep track of active function calls
+int top = -1;                 // Top of the stack
+FuncTime funcTimes[MAX_FUNC]; // Array to store function names and their total execution times
+int funcCount = 0;            // Number of unique functions
+
+void push(char *funcName, int startTime)
+{
+    top++;
+    strncpy(stack[top].funcName, funcName, MAX_NAME_LEN);
+    stack[top].startTime = startTime;
+    stack[top].totalTime = 0;
+}
+
+int pop(char *funcName, int endTime, int *execTime)
+{
+    if (top == -1 || strcmp(stack[top].funcName, funcName) != 0)
+    {
+        return -1; // Stack is empty or function name mismatch
+    }
+
+    int startTime = stack[top].startTime;
+    if (startTime > endTime)
+    {
+        return -1; // End time is before start time
+    }
+
+    int startTime = stack[top].startTime;
+    *execTime = endTime - startTime - stack[top].totalTime;
+    top--;
+
+    if (top != -1)
+    {
+        stack[top].totalTime += endTime - startTime;
+    }
+
+    return 0;
+}
+
+void updateFuncTime(char *funcName, int execTime)
+{
+    for (int i = 0; i < funcCount; i++)
+    {
+        if (strcmp(funcTimes[i].funcName, funcName) == 0)
+        {
+            funcTimes[i].totalTime += execTime;
+            return;
+        }
+    }
+    strncpy(funcTimes[funcCount].funcName, funcName, MAX_NAME_LEN);
+    funcTimes[funcCount].totalTime = execTime;
+    funcCount++;
+}
 
 int main()
 {
-    int n = 0;
-    scanf("%d", &n);
-    char lines[n][MAX_LENGTH];
-    int i = 0;
+    int n;
+    scanf("%d\n", &n); // Read the number of log entries
 
-    // while (i <= n)
-    // {
-    //     scanf("%s", &lines[i]);
-    //     i++;
-    // }
-    while (i < n)
+    char line[100], funcName[MAX_NAME_LEN], op[6];
+    int time, execTime;
+
+    for (int i = 0; i < n; i++)
     {
-        if (fgets(lines[i], MAX_LENGTH, stdin))
+        fgets(line, sizeof(line), stdin); // Read each log entry
+        sscanf(line, "%s %s %d", funcName, op, &time);
+
+        if (strcmp(op, "start") == 0)
         {
-            if (lines[i][0] == '\n')
-                break;
+            push(funcName, time);
         }
-        else
+        else if (strcmp(op, "end") == 0)
         {
-            clearerr(stdin);
-            break;
+            if (pop(funcName, time, &execTime) == 0)
+            {
+                updateFuncTime(funcName, execTime);
+            }
+            else
+            {
+                printf("ERROR\n");
+                return 1;
+            }
         }
-        i++;
     }
 
-    for (int j = 0; j < i; j++)
+    int maxIndex = 0;
+    for (int i = 1; i < funcCount; i++)
     {
-        printf("%d : %s", j + 1, lines[j]);
+        if (funcTimes[i].totalTime > funcTimes[maxIndex].totalTime)
+        {
+            maxIndex = i;
+        }
     }
+
+    printf("%s %d\n", funcTimes[maxIndex].funcName, funcTimes[maxIndex].totalTime);
 
     return 0;
 }
