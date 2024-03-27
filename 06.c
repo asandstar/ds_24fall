@@ -1,100 +1,78 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdbool.h>
-typedef struct qnode
-{
-    int data;
-    struct qnode *next;
-} DataNode;
 
 typedef struct
 {
-    DataNode *front;
-    DataNode *rear;
-} LinkQuNode;
+    int id;   // 进程ID
+    int data; // 剩余数据量
+} Process;
 
-void InitQueue(LinkQuNode *q)
+// 初始化进程队列
+void initProcesses(Process **processes, int n)
 {
-    q = (LinkQuNode *)malloc(sizeof(LinkQuNode));
-    q->front = q->rear = NULL;
-}
-
-void DestroyQueue(LinkQuNode *q)
-{
-    DataNode *p = q->front, *r;
-    while (p != NULL)
+    *processes = (Process *)malloc(n * sizeof(Process));
+    for (int i = 0; i < n; i++)
     {
-        r = p->next;
-        free(p);
-        p = r;
-    }
-}
-bool QueueEmpty(LinkQuNode *q)
-{
-    return (q->rear == NULL);
-}
-
-void enQueue(LinkQuNode *q, int e)
-{
-    DataNode *p = (DataNode *)malloc(sizeof(DataNode));
-    p->data = e;
-    p->next = NULL;
-    if (q->rear == NULL)
-        q->front = q->rear = p;
-    else
-    {
-        q->rear->next = p;
-        q->rear = p;
+        (*processes)[i].id = i + 1;           // 设置进程ID
+        scanf("%d", &((*processes)[i].data)); // 读取每个进程的数据量
     }
 }
 
-bool deQueue(LinkQuNode *q, int e)
+// 处理进程传输
+void processTransfers(Process *processes, int n, int s, float T)
 {
-    if (q->rear == NULL)
-        return false;
-    DataNode *t = q->front;
-    e = t->data;
-    if (q->front == q->rear)
-        q->front = q->rear = NULL;
-    else
-        q->front = q->front->next;
+    float currentTime = 0.0;
+    while (currentTime < T)
+    {
+        for (int i = 0; i < n && currentTime < T; i++)
+        {
+            if (processes[i].data > 0)
+            {                                                                                      // 如果进程还有数据需要传输
+                float transferTime = (processes[i].data < s) ? (float)processes[i].data / s : 1.0; // 计算传输所需时间
+                if (currentTime + transferTime > T)
+                { // 如果当前时间加上传输时间超出总时间，调整传输时间
+                    transferTime = T - currentTime;
+                }
+                int dataTransferred = s * transferTime; // 计算这次传输的数据量
+                processes[i].data -= dataTransferred;   // 更新剩余数据量
+                currentTime += transferTime;            // 更新当前时间
+            }
+        }
+    }
+}
 
-    free(t);
-    return true;
+// 打印最终进程状态
+void printProcesses(Process *processes, int n)
+{
+    int allTransferred = 1;
+    for (int i = 0; i < n; i++)
+    {
+        if (processes[i].data > 0)
+        {
+            printf("%d %d\n", processes[i].id, processes[i].data);
+            allTransferred = 0;
+        }
+    }
+    if (allTransferred)
+    {
+        printf("DONE\n");
+    }
 }
 
 int main()
 {
-    int n, s;
-    float t;
-    LinkQuNode num;
-    InitQueue(&num);
+    int n, s; // 进程数和网卡速率
+    scanf("%d %d", &n, &s);
 
-    scanf("%d", &n);
-    scanf("%d", &s);
+    Process *processes;
+    initProcesses(&processes, n);
 
-    for (int i = 0; i < 4; ++i)
-    {
-        int number;
-        scanf("%d", &number);
-        enQueue(&num, number);
-    }
+    float T; // 总时间
+    scanf("%f", &T);
 
+    processTransfers(processes, n, s, T);
+    printProcesses(processes, n);
+
+    free(processes);
     return 0;
 }
-
-/**
- *
- *         // scanf("%f", &t);
-    // // test
-    // printf("%d", n);
-    // printf("\n");
-    // printf("%d", s);
-    // printf("\n");
-    // // for (int i = 0; i < n; i++)
-    // // {
-    // //     printf("%d", d[i]);
-    // // }
-    // printf("\n");
-    // printf("%d", t);
-*/

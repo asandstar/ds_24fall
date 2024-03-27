@@ -19,10 +19,11 @@ typedef struct
     int totalTime;
 } FuncTime;
 
-FuncLog stack[MAX_LOGS];      // Stack to keep track of active function calls
-int top = -1;                 // Top of the stack
-FuncTime funcTimes[MAX_FUNC]; // Array to store function names and their total execution times
-int funcCount = 0;            // Number of unique functions
+FuncLog stack[MAX_LOGS];      // 用于跟踪活动函数调用的栈
+int top = -1;                 // 栈顶指针
+FuncTime funcTimes[MAX_FUNC]; // 存储函数名称及其总执行时间的数组
+int funcCount = 0;            // 函数的数量
+int errorFlag = 0;            // 错误标志
 
 void push(char *funcName, int startTime)
 {
@@ -34,22 +35,20 @@ void push(char *funcName, int startTime)
 
 int pop(char *funcName, int endTime, int *execTime)
 {
-    if (top == -1)
+    // 栈为空or函数名不匹配
+    if (top == -1 || strcmp(stack[top].funcName, funcName) != 0)
     {
-        return -1; // Stack is empty
+        errorFlag = 1; // 设置错误标志
+        return -1;
     }
-
-    if (strcmp(stack[top].funcName, funcName) != 0)
-    {
-        return -1; // Function name mismatch
-    }
-
+    // 开始时间 > 结束时间，错误
     int startTime = stack[top].startTime;
     if (startTime > endTime)
     {
-        return -1; // End time is before start time
+        errorFlag = 1; // 设置错误标志
+        return -1;
     }
-
+    // 函数独占时间 = 结束时间 - 开始时间 - 栈顶总计时间
     *execTime = endTime - startTime - stack[top].totalTime;
     top--;
 
@@ -79,14 +78,14 @@ void updateFuncTime(char *funcName, int execTime)
 int main()
 {
     int n;
-    scanf("%d\n", &n); // Read the number of log entries
+    scanf("%d\n", &n); // 读取日志条目数
 
     char line[100], funcName[MAX_NAME_LEN], op[6];
     int time, execTime;
 
     for (int i = 0; i < n; i++)
     {
-        fgets(line, sizeof(line), stdin); // Read each log entry
+        fgets(line, sizeof(line), stdin); // 读取每个日志条目
         sscanf(line, "%s %s %d", funcName, op, &time);
 
         if (strcmp(op, "start") == 0)
@@ -95,42 +94,32 @@ int main()
         }
         else if (strcmp(op, "end") == 0)
         {
-            if (pop(funcName, time, &execTime) != 0)
-            {
-                printf("ERROR\n");
-                return 1; // Early exit on error
-            }
-            else
+            if (pop(funcName, time, &execTime) == 0)
             {
                 updateFuncTime(funcName, execTime);
             }
         }
     }
 
-    if (top != -1)
+    // 处理完所有输入后，根据是否有错误来决定输出
+    if (errorFlag || top != -1)
     {
-        printf("ERROR\n"); // Unfinished functions indicate a log error
-        return 1;
+        printf("ERROR\n"); // 如果有未结束的函数或者设置了错误标志，则输出错误
     }
-
-    // Assuming the input is well-formed and there's no error
-    // Proceed to find and print the function with the longest execution time
-    if (funcCount == 0)
+    else
     {
-        printf("No functions were executed.\n");
-        return 0;
-    }
-
-    int maxIndex = 0;
-    for (int i = 1; i < funcCount; i++)
-    {
-        if (funcTimes[i].totalTime > funcTimes[maxIndex].totalTime)
+        // 如果输入合法，找出执行时间最长的函数并输出
+        int maxIndex = 0;
+        for (int i = 1; i < funcCount; i++)
         {
-            maxIndex = i;
+            if (funcTimes[i].totalTime > funcTimes[maxIndex].totalTime)
+            {
+                maxIndex = i;
+            }
         }
-    }
 
-    printf("Function %s has the longest execution time of %d\n", funcTimes[maxIndex].funcName, funcTimes[maxIndex].totalTime);
+        printf("%s %d\n", funcTimes[maxIndex].funcName, funcTimes[maxIndex].totalTime);
+    }
 
     return 0;
 }
