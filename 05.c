@@ -34,9 +34,14 @@ void push(char *funcName, int startTime)
 
 int pop(char *funcName, int endTime, int *execTime)
 {
-    if (top == -1 || strcmp(stack[top].funcName, funcName) != 0)
+    if (top == -1)
     {
-        return -1; // Stack is empty or function name mismatch
+        return -1; // Stack is empty
+    }
+
+    if (strcmp(stack[top].funcName, funcName) != 0)
+    {
+        return -1; // Function name mismatch
     }
 
     int startTime = stack[top].startTime;
@@ -45,7 +50,6 @@ int pop(char *funcName, int endTime, int *execTime)
         return -1; // End time is before start time
     }
 
-    int startTime = stack[top].startTime;
     *execTime = endTime - startTime - stack[top].totalTime;
     top--;
 
@@ -91,16 +95,30 @@ int main()
         }
         else if (strcmp(op, "end") == 0)
         {
-            if (pop(funcName, time, &execTime) == 0)
+            if (pop(funcName, time, &execTime) != 0)
             {
-                updateFuncTime(funcName, execTime);
+                printf("ERROR\n");
+                return 1; // Early exit on error
             }
             else
             {
-                printf("ERROR\n");
-                return 1;
+                updateFuncTime(funcName, execTime);
             }
         }
+    }
+
+    if (top != -1)
+    {
+        printf("ERROR\n"); // Unfinished functions indicate a log error
+        return 1;
+    }
+
+    // Assuming the input is well-formed and there's no error
+    // Proceed to find and print the function with the longest execution time
+    if (funcCount == 0)
+    {
+        printf("No functions were executed.\n");
+        return 0;
     }
 
     int maxIndex = 0;
@@ -112,7 +130,7 @@ int main()
         }
     }
 
-    printf("%s %d\n", funcTimes[maxIndex].funcName, funcTimes[maxIndex].totalTime);
+    printf("Function %s has the longest execution time of %d\n", funcTimes[maxIndex].funcName, funcTimes[maxIndex].totalTime);
 
     return 0;
 }
