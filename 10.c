@@ -1,71 +1,58 @@
 #include <stdio.h>
+#include <string.h>
 #include <stdlib.h>
-#include <stdbool.h>
 
-// Function to check if a queen can be placed on board[row][col]
-bool isSafe(int row, int col, int N, int *columns, int *majorDiag, int *minorDiag)
+int countSolutions = 0; // global variable
+
+int isSafe(int *position, int currentRow, int col, int m)
 {
-    int d1 = row - col + N;
-    int d2 = row + col;
-    return !columns[col] && !majorDiag[d1] && !minorDiag[d2];
-}
-
-// Recursive function to place queens
-int placeQueens(int row, int N, int M, int *columns, int *majorDiag, int *minorDiag, int queensPlaced)
-{
-    if (queensPlaced == M)
+    for (int i = 0; i < currentRow; i++)
     {
-        return 1; // Found a valid placement
-    }
-    if (row == N)
-        return 0; // Reached beyond the last row without placing all queens
-
-    int solutions = 0;
-    for (int col = 0; col < N; col++)
-    {
-        if (isSafe(row, col, N, columns, majorDiag, minorDiag))
+        int otherCol = position[i];
+        // check col and diagonal collapse
+        if (col == otherCol || abs(col - otherCol) == abs(currentRow - i))
         {
-            columns[col] = majorDiag[row - col + N] = minorDiag[row + col] = 1; // Place queen
-            solutions += placeQueens(row + 1, N, M, columns, majorDiag, minorDiag, queensPlaced + 1);
-            columns[col] = majorDiag[row - col + N] = minorDiag[row + col] = 0; // Remove queen (backtrack)
+            return 0;
         }
     }
-    return solutions;
+    return 1;
 }
 
-// Main function to drive the program
+void solveNQueen(int *position, int currentRow, int m, int n)
+{
+    if (currentRow == m) // place m queen
+    {
+        countSolutions++;
+        return;
+    }
+    for (int col = 0; col < n; col++)
+    {
+        if (isSafe(position, currentRow, col, n))
+        {
+            position[currentRow] = col;
+            solveNQueen(position, currentRow + 1, m, n);
+            position[currentRow] = -1;
+        }
+    }
+}
+
+int totalNQueens(int n, int m)
+{
+    int *position = malloc(n * sizeof(int));
+
+    memset(position, 0, n * sizeof(int));
+
+    countSolutions = 0;
+    solveNQueen(position, 0, m, n);
+
+    free(position);
+    return countSolutions;
+}
+
 int main()
 {
-    int N, M;
-    printf("Enter the size of the chess board N: ");
-    scanf("%d", &N);
-    printf("Enter the number of queens M: ");
-    scanf("%d", &M);
-
-    if (M > N)
-    {
-        printf("Number of queens M cannot be greater than N.\n");
-        return 1;
-    }
-
-    int *columns = calloc(N, sizeof(int));
-    int *majorDiag = calloc(2 * N, sizeof(int));
-    int *minorDiag = calloc(2 * N, sizeof(int));
-
-    if (!columns || !majorDiag || !minorDiag)
-    {
-        printf("Failed to allocate memory.\n");
-        free(columns);
-        free(majorDiag);
-        free(minorDiag);
-        return 1;
-    }
-
-    int totalSolutions = placeQueens(0, N, M, columns, majorDiag, minorDiag, 0);
-    printf("Total solutions for %d queens on %d x %d board: %d\n", M, N, totalSolutions);
-
-    free(columns);
-    free(majorDiag);
-    free(minorDiag);
+    int n, m;
+    scanf("%d %d", &n, &m);
+    printf("%d", totalNQueens(n, m));
     return 0;
 }
