@@ -236,11 +236,9 @@ int totalNQueens(int n, int m, int k)
 
 int main()
 {
-    int m, n, k;
-    printf("Enter the dimensions of the board (MxN) and the number of queens K:\n");
-    scanf("%d %d %d", &m, &n, &k);
-
-    printf("There are %d solutions to place %d queens on a %d x %d board.\n",
-           totalNQueens(n, m, k), k, m, n);
+    int n, m;
+    scanf("%d %d", &n, &m);
+    printf("%d",
+           totalNQueens(n, n, m), m, n, n);
     return 0;
 }
