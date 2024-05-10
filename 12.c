@@ -100,19 +100,28 @@ void moveSubtree(Node *root, int srcPath[], int srcLen, int destPath[], int dest
 {
     Node *srcParent = getParentNodeByPath(root, srcPath, srcLen);
     Node *srcNode = getNodeByPath(root, srcPath, srcLen);
-    for (int i = 0; i < srcParent->childCount; i++)
+
+    // Find the position of srcNode in srcParent's children array
+    int srcIndex;
+    for (srcIndex = 0; srcIndex < srcParent->childCount; srcIndex++)
     {
-        if (srcParent->children[i] == srcNode)
+        if (srcParent->children[srcIndex] == srcNode)
         {
-            for (int j = i; j < srcParent->childCount - 1; j++)
-            {
-                srcParent->children[j] = srcParent->children[j + 1];
-            }
-            srcParent->childCount--;
             break;
         }
     }
-    Node *destParent = getNodeByPath(root, destPath, destLen); // 另目的位置的节点表示为移除源子树后的节点表示。
+
+    // Remove srcNode from srcParent's children
+    for (int i = srcIndex; i < srcParent->childCount - 1; i++)
+    {
+        srcParent->children[i] = srcParent->children[i + 1];
+    }
+    srcParent->childCount--;
+
+    // Find the destination parent node
+    Node *destParent = getNodeByPath(root, destPath, destLen);
+
+    // Insert srcNode into destParent's children at the specified rank
     if (destRank >= destParent->childCount)
     {
         destParent->children[destParent->childCount++] = srcNode;
@@ -127,6 +136,7 @@ void moveSubtree(Node *root, int srcPath[], int srcLen, int destPath[], int dest
         destParent->childCount++;
     }
 }
+
 // 8.层次遍历输出（BFS广度优先遍历算法）
 void levelOrderTraversal(Node *root)
 {
