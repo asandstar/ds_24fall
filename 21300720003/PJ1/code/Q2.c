@@ -138,6 +138,6 @@ int main()
     }
     fprintf(output_file, "%d\n", count);
     fclose(output_file);
-    // printf("Number of emails in the blacklist: %d\n", count);
+    printf("Number of emails in the blacklist: %d\n", count);
     return 0;
 }
