@@ -129,6 +129,15 @@ int main()
     }
     fclose(underfilt_file);
 
-    printf("Number of emails in the blacklist: %d\n", count);
+    // 将结果输出到output_2.txt文件
+    FILE *output_file = fopen("output_2.txt", "w");
+    if (!output_file)
+    {
+        perror("Failed to open output file");
+        return 1;
+    }
+    fprintf(output_file, "%d\n", count);
+    fclose(output_file);
+    // printf("Number of emails in the blacklist: %d\n", count);
     return 0;
 }
